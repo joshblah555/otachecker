@@ -8,10 +8,9 @@
 
 #import <Foundation/Foundation.h>
 
-void printOtas(NSDictionary *softwareupdates){
+void printOtas(NSDictionary *tvsoftwareupdates){
     NSMutableDictionary *res = [NSMutableDictionary new];
-    printf("checking what ota versions are being signed\n");
-    NSArray *otas = [softwareupdates valueForKey:@"Assets"];
+    NSArray *otas = [tvsoftwareupdates valueForKey:@"Assets"];
     
     for (NSDictionary *obj in otas) {
         id allowableOTA;
@@ -28,10 +27,10 @@ void printOtas(NSDictionary *softwareupdates){
         [res setValue:resdevs forKey:version];
     }
     
-    printf("Apple currently signs following ota firmwares:\n");
+    
     for (NSString *key in [[res allKeys] sortedArrayUsingSelector:@selector(localizedCaseInsensitiveCompare:)]) {
         NSArray *devs = [res valueForKey:key];
-        printf("[iOS %s]:\n",[key UTF8String]);
+        printf("[%s]:\n",[key UTF8String]);
         
         char currentDevice[0x100];
         memset(currentDevice, 0, 0x100);
@@ -65,8 +64,8 @@ void printhelp(){
     printf("\n\n");
 }
 
-void printURL(NSString *device, NSString *ios, NSDictionary *softwareupdates){
-    NSArray *otas = [softwareupdates valueForKey:@"Assets"];
+void printURL(NSString *device, NSString *ios, NSDictionary *tvsoftwareupdates){
+    NSArray *otas = [tvsoftwareupdates valueForKey:@"Assets"];
     
     printf("checking ota url for %s %s\n",[device UTF8String],[ios UTF8String]);
     
@@ -87,8 +86,11 @@ void printURL(NSString *device, NSString *ios, NSDictionary *softwareupdates){
 
 int main(int argc, const char * argv[]) {
     @autoreleasepool {
-        printf("downloading com_apple_MobileAsset_SoftwareUpdate.xml\n");
-        NSDictionary *softwareupdates = [[NSDictionary alloc] initWithContentsOfURL:[NSURL URLWithString:@"http://mesu.apple.com/assets/com_apple_MobileAsset_SoftwareUpdate/com_apple_MobileAsset_SoftwareUpdate.xml"]];
+        printf("Downloading software update manifest...\n");
+        printf("Apple is currently signing the following OTA versions:\n");
+        NSDictionary *tvsoftwareupdates = [[NSDictionary alloc] initWithContentsOfURL:[NSURL URLWithString:@"http://mesu.apple.com/assets/com_apple_MobileAsset_SoftwareUpdate/com_apple_MobileAsset_SoftwareUpdate.xml"]];
+        NSDictionary *softwareupdates = [[NSDictionary alloc] initWithContentsOfURL:[NSURL URLWithString:@"http://mesu.apple.com/assets/tv/com_apple_MobileAsset_SoftwareUpdate/com_apple_MobileAsset_SoftwareUpdate.xml"]];
+        
         
         BOOL wantsURL = false;
         NSString *device;
@@ -97,6 +99,7 @@ int main(int argc, const char * argv[]) {
         char c;
         if (argc == 1) {
             printOtas(softwareupdates);
+            printOtas(tvsoftwareupdates);
             exit(0);
         }
         
@@ -137,14 +140,9 @@ int main(int argc, const char * argv[]) {
                 printf("Error: -d and -i required for -u\n");
                 exit(1);
             }
-            printURL(device,ios,softwareupdates);
+            printURL(device,ios,tvsoftwareupdates);
         }
         
     }
     return 0;
 }
-
-
-
-
-
